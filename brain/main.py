@@ -6,5 +6,5 @@ class Brain:
         self.engine = BrainEngine()
 
     def start(self):
-        print("FSAI is online.")
+        self.engine.boot()
         self.engine.run()
