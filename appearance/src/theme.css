@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Core palette — pearlescent wine-red identity */
+  --color-wine: #6d2436;
+  --color-wine-deep: #4a1826;
+  --color-wine-light: #8f3a4d;
+
+  /* Pearl / soft-white surfaces */
+  --color-pearl: #f6f1ee;
+  --color-pearl-dim: #ece3de;
+  --color-surface: #ffffff;
+
+  /* Champagne-gold accent */
+  --color-gold: #c9a769;
+  --color-gold-soft: #e3cd9d;
+
+  /* Ink / text */
+  --color-ink: #2b2024;
+  --color-ink-soft: #6f5d63;
+  --color-ink-faint: #a5949a;
+
+  /* Glass / translucency */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: 14px;
+
+  /* Elevation */
+  --shadow-soft: 0 8px 24px rgba(74, 24, 38, 0.08);
+  --shadow-card: 0 14px 34px rgba(74, 24, 38, 0.14);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* Radii */
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
+
+  /* Type */
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 160ms var(--ease-standard);
+  --transition-medium: 320ms var(--ease-standard);
+  --transition-slow: 520ms var(--ease-standard);
+
+  /* Ambient "breathing" atmosphere — slow and deliberately understated */
+  --breathe-duration: 21s;
+  --drift-duration: 34s;
+  --ambient-light-warm: rgba(227, 205, 157, 0.16);
+  --ambient-light-soft: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-pearl);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
