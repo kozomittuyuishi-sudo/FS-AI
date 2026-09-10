@@ -1,110 +1,488 @@
 import { useEffect, useState } from 'react'
-import Sidebar from './Sidebar.jsx'
-import ThemeCard from './ThemeCard.jsx'
 
-const SWATCHES = [
-  {
-    swatchClass: 'swatch--wine',
-    name: 'Pearlescent Wine',
-    hex: '#6D2436',
-    description:
-      'The primary identity color. Used for key actions, active states, and the brand mark. Carries a soft sheen rather than a flat fill.',
-  },
-  {
-    swatchClass: 'swatch--pearl',
-    name: 'Pearl Surface',
-    hex: '#F6F1EE',
-    description:
-      'Base surface tone for panels and backgrounds. Warm off-white, never stark, so content stays easy on the eyes.',
-  },
-  {
-    swatchClass: 'swatch--gold',
-    name: 'Champagne Gold',
-    hex: '#C9A769',
-    description:
-      'Reserved for accents — dividers, highlights, and small details that suggest craftsmanship without shouting.',
-  },
-  {
-    swatchClass: 'swatch--glass',
-    name: 'Glass Layer',
-    hex: 'rgba(255,255,255,.55)',
-    description:
-      'Translucent panels with blur, used sparingly for elements that should feel light and layered above the base surface.',
-  },
-]
+import StatusOrb from './StatusOrb.jsx'
+import StateDevPanel from './StateDevPanel.jsx'
+
+import {
+  useFSAI,
+  FSAI_STATES,
+  STATE_LABEL,
+} from './FSAIContext.jsx'
+
+
+/* =========================================================
+   MODULE DATA
+   ========================================================= */
 
 const MODULES = [
-  { name: 'Appearance', status: 'active' },
-  { name: 'Brain', status: 'offline' },
-  { name: 'Vision', status: 'offline' },
-  { name: 'Memory', status: 'offline' },
-  { name: 'Stylist', status: 'offline' },
-  { name: 'Wardrobe', status: 'offline' },
+  {
+    id: 'appearance',
+    name: 'Appearance',
+    description: 'Visual identity',
+    status: 'active',
+    position: 'main',
+  },
+
+  {
+    id: 'brain',
+    name: 'Brain',
+    description: 'Core orchestration',
+    status: 'offline',
+    position: 'left-top',
+  },
+
+  {
+    id: 'memory',
+    name: 'Memory',
+    description: 'Context & history',
+    status: 'offline',
+    position: 'left-bottom',
+  },
+
+  {
+    id: 'vision',
+    name: 'Vision',
+    description: 'Visual perception',
+    status: 'offline',
+    position: 'right-top',
+  },
+
+  {
+    id: 'stylist',
+    name: 'Stylist',
+    description: 'Style reasoning',
+    status: 'offline',
+    position: 'right-bottom',
+  },
+
+  {
+    id: 'wardrobe',
+    name: 'Wardrobe',
+    description: 'Clothing intelligence',
+    status: 'offline',
+    position: 'bottom',
+  },
 ]
 
+
+/* =========================================================
+   STATE CONTENT MAP
+   ========================================================= */
+
+const STATE_CONTENT = {
+
+  [FSAI_STATES.IDLE]: {
+    eyebrow: 'FSAI',
+    heading: 'Appearance',
+    description: 'Visual identity system',
+  },
+
+  [FSAI_STATES.THINKING]: {
+    eyebrow: 'FSAI',
+    heading: 'Considering…',
+    description: 'Processing context',
+  },
+
+  [FSAI_STATES.ANALYSING]: {
+    eyebrow: 'FSAI',
+    heading: 'Reading the details.',
+    description: 'Analysing visual context',
+  },
+
+  [FSAI_STATES.PROCESSING]: {
+    eyebrow: 'FSAI',
+    heading: 'Working.',
+    description: 'Processing request',
+  },
+
+  [FSAI_STATES.RESULT]: {
+    eyebrow: 'FSAI',
+    heading: 'Ready.',
+    description: 'Result available',
+  },
+
+  [FSAI_STATES.ERROR]: {
+    eyebrow: 'FSAI',
+    heading: 'Something went wrong.',
+    description: 'The system is ready to recover',
+  },
+
+}
+
+
+/* =========================================================
+   APP
+   ========================================================= */
+
 export default function App() {
+
+  const { state, meta, is } = useFSAI()
+
   const [mounted, setMounted] = useState(false)
 
+
+  /* -------------------------------------------------------
+     Entrance
+     ------------------------------------------------------- */
+
   useEffect(() => {
-    // Triggers the entrance transition on first paint.
-    const t = requestAnimationFrame(() => setMounted(true))
-    return () => cancelAnimationFrame(t)
+
+    const timer = requestAnimationFrame(() => {
+      setMounted(true)
+    })
+
+    return () => cancelAnimationFrame(timer)
+
   }, [])
 
+
+  /* -------------------------------------------------------
+     Renderer ready
+     ------------------------------------------------------- */
+
+  useEffect(() => {
+
+    window.fsai?.send('fsai:state-ready', {})
+
+  }, [])
+
+
+  /* -------------------------------------------------------
+     State
+     ------------------------------------------------------- */
+
+  const isWorking =
+    is(FSAI_STATES.THINKING) ||
+    is(FSAI_STATES.ANALYSING) ||
+    is(FSAI_STATES.PROCESSING)
+
+
+  const content =
+    STATE_CONTENT[state] ??
+    STATE_CONTENT[FSAI_STATES.IDLE]
+
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
   return (
-    <div className="app-shell">
-      <Sidebar />
 
-      <main className={`main-panel ${mounted ? 'main-panel--in' : ''}`}>
-        <header className="topbar">
-          <div>
-            <h1 className="topbar-title">Appearance</h1>
-            <p className="topbar-subtitle">Visual identity system for FSAI</p>
-          </div>
-          <div className="topbar-status">
-            <span className="status-dot" />
-            Module active
-          </div>
-        </header>
+    <div
+      className={[
+        'appearance',
+        mounted ? 'appearance--mounted' : '',
+        isWorking ? 'appearance--working' : '',
+        `appearance--${String(state).toLowerCase()}`,
+      ].join(' ')}
 
-        <section className="hero glass">
-          <h2>A quiet, considered aesthetic.</h2>
-          <p>
-            The Appearance layer defines how FSAI looks and feels across every
-            future module — wine-red as the signature tone, pearl surfaces
-            for calm, and champagne gold for restraint. Every other module
-            will build on top of this foundation.
-          </p>
-        </section>
+      data-state={state}
+    >
 
-        <section className="section-block">
-          <h3 className="section-title">Theme tokens</h3>
-          <div className="theme-grid">
-            {SWATCHES.map((s) => (
-              <ThemeCard key={s.name} {...s} />
-            ))}
-          </div>
-        </section>
 
-        <section className="section-block">
-          <h3 className="section-title">System</h3>
-          <div className="module-panel glass">
-            {MODULES.map((m) => (
-              <div className="module-row" key={m.name}>
-                <span
-                  className={`module-dot ${
-                    m.status === 'active' ? 'module-dot--active' : ''
-                  }`}
-                />
-                <span className="module-name">{m.name}</span>
-                <span className="module-status">
-                  {m.status === 'active' ? 'Active' : 'Offline'}
-                </span>
-              </div>
-            ))}
+      {/* ===================================================
+          VIDEO ENVIRONMENT
+          =================================================== */}
+
+      <div
+        className="background-layer"
+        aria-hidden="true"
+      >
+
+        <video
+          className="background-video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          src="/video/webwallpaper.mp4"
+        />
+
+        <div className="background-overlay" />
+
+        <div className="background-vignette" />
+
+      </div>
+
+
+      {/* ===================================================
+          TOP BRAND
+          =================================================== */}
+
+      <header className="appearance-header">
+
+        <div className="appearance-brand">
+
+          <span className="appearance-brand-mark">
+            FSAI
+          </span>
+
+          <span className="appearance-brand-name">
+            FashionSense AI
+          </span>
+
+        </div>
+
+
+        <div className="appearance-status">
+
+          <StatusOrb />
+
+          <span>
+            {STATE_LABEL[state]}
+          </span>
+
+        </div>
+
+      </header>
+
+
+      {/* ===================================================
+          WIDGET STAGE
+          =================================================== */}
+
+      <main className="widget-stage">
+
+
+        {/* -------------------------------------------------
+            MODULE WIDGETS
+            ------------------------------------------------- */}
+
+        {MODULES.map((module) => (
+
+          <ModuleWidget
+            key={module.id}
+            module={module}
+            currentState={state}
+            content={module.position === 'main' ? content : null}
+            meta={module.position === 'main' ? meta : null}
+          />
+
+        ))}
+
+
+        {/* =================================================
+            STATE INDICATOR
+            ================================================= */}
+
+        <div className="appearance-state">
+
+          <span className="appearance-state-line" />
+
+          <span>
+            {STATE_LABEL[state]}
+          </span>
+
+          <span className="appearance-state-line" />
+
+        </div>
+
+
+        {/* =================================================
+            PROCESSING
+            ================================================= */}
+
+        {isWorking && (
+
+          <div className="appearance-processing">
+
+            <span />
+            <span />
+            <span />
+
           </div>
-        </section>
+
+        )}
+
+
+        {/* =================================================
+            RESULT
+            ================================================= */}
+
+        {is(FSAI_STATES.RESULT) && (
+
+          <section className="appearance-result">
+
+            <span className="appearance-result-label">
+              RESULT
+            </span>
+
+            <h2>
+              {meta?.headline || 'Analysis complete.'}
+            </h2>
+
+            {meta?.summary && (
+              <p>{meta.summary}</p>
+            )}
+
+            {meta?.items?.length > 0 && (
+
+              <ul>
+
+                {meta.items.map((item, index) => (
+
+                  <li key={index}>
+                    {item}
+                  </li>
+
+                ))}
+
+              </ul>
+
+            )}
+
+          </section>
+
+        )}
+
+
+        {/* =================================================
+            ERROR
+            ================================================= */}
+
+        {is(FSAI_STATES.ERROR) && (
+
+          <section className="appearance-error">
+
+            <span>
+              ERROR
+            </span>
+
+            <p>
+              {meta?.message ||
+                'An unexpected error occurred.'}
+            </p>
+
+          </section>
+
+        )}
+
       </main>
+
+
+      {/* ===================================================
+          DEVELOPMENT PANEL
+          =================================================== */}
+
+      <StateDevPanel />
+
     </div>
+
+  )
+}
+
+
+/* =========================================================
+   MODULE WIDGET
+   ========================================================= */
+
+function ModuleWidget({
+  module,
+  currentState,
+  content,
+  meta,
+}) {
+
+  const isMain =
+    module.position === 'main'
+
+  const isActive =
+    module.status === 'active'
+
+  const isProcessing =
+    currentState !== FSAI_STATES.IDLE &&
+    currentState !== FSAI_STATES.RESULT &&
+    currentState !== FSAI_STATES.ERROR
+
+  return (
+
+    <article
+      className={[
+        'module-widget',
+        `module-widget--${module.position}`,
+        isActive ? 'module-widget--active' : '',
+        isProcessing && !isActive
+          ? 'module-widget--recede'
+          : '',
+      ].join(' ')}
+    >
+
+      <div className="module-widget-inner">
+
+        <div className="module-widget-header">
+
+          <span
+            className={[
+              'module-widget-indicator',
+              isActive
+                ? 'module-widget-indicator--active'
+                : '',
+            ].join(' ')}
+          />
+
+          <span className="module-widget-index">
+            {module.id.slice(0, 2).toUpperCase()}
+          </span>
+
+        </div>
+
+
+        {/* Main/Appearance widget shows full state content */}
+
+        {isMain && content ? (
+
+          <div className="module-widget-content module-widget-content--main">
+
+            <span className="appearance-eyebrow">
+              {content.eyebrow}
+            </span>
+
+            <h1 className="appearance-title">
+              {content.heading}
+            </h1>
+
+            <p className="appearance-description">
+              {content.description}
+            </p>
+
+            {meta?.summary && (
+              <p className="appearance-meta">
+                {meta.summary}
+              </p>
+            )}
+
+          </div>
+
+        ) : (
+
+          <div className="module-widget-content">
+
+            <h2>
+              {module.name}
+            </h2>
+
+            <p>
+              {module.description}
+            </p>
+
+          </div>
+
+        )}
+
+
+        <div className="module-widget-footer">
+
+          <span>
+            {isActive
+              ? STATE_LABEL[currentState]
+              : 'Offline'}
+          </span>
+
+        </div>
+
+      </div>
+
+    </article>
+
   )
 }

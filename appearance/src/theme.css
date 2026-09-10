@@ -1,58 +1,125 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   theme.css — FSAI design tokens
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Section map:
+     1. Core colour palette
+     2. Glass / translucency
+     3. Elevation
+     4. Geometry
+     5. Typography
+     6. Motion tokens
+     7. Ambient atmosphere
+     8. State custom properties  ← NEW
+     9. Base resets
+
+   State properties live here so that every layer of the interface can
+   react to [data-fsai-state] or [data-fsai-weight] on <html> by reading
+   the relevant token rather than hard-coding a value per component.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 :root {
-  /* Core palette — pearlescent wine-red identity */
-  --color-wine: #6d2436;
-  --color-wine-deep: #4a1826;
+  /* ── 1. Core colour palette ───────────────────────────────────────────── */
+  --color-wine:       #6d2436;
+  --color-wine-deep:  #4a1826;
   --color-wine-light: #8f3a4d;
 
-  /* Pearl / soft-white surfaces */
-  --color-pearl: #f6f1ee;
-  --color-pearl-dim: #ece3de;
-  --color-surface: #ffffff;
+  --color-pearl:      #f6f1ee;
+  --color-pearl-dim:  #ece3de;
+  --color-surface:    #ffffff;
 
-  /* Champagne-gold accent */
-  --color-gold: #c9a769;
-  --color-gold-soft: #e3cd9d;
+  --color-gold:       #c9a769;
+  --color-gold-soft:  #e3cd9d;
 
-  /* Ink / text */
-  --color-ink: #2b2024;
-  --color-ink-soft: #6f5d63;
-  --color-ink-faint: #a5949a;
+  --color-ink:        #2b2024;
+  --color-ink-soft:   #6f5d63;
+  --color-ink-faint:  #a5949a;
 
-  /* Glass / translucency */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-blur: 14px;
+  /* Result/success green — used only for RESULT state, never for branding */
+  --color-resolve:       #4caf7d;
+  --color-resolve-glow:  rgba(76, 175, 125, 0.18);
+  --color-resolve-light: rgba(76, 175, 125, 0.10);
 
-  /* Elevation */
-  --shadow-soft: 0 8px 24px rgba(74, 24, 38, 0.08);
-  --shadow-card: 0 14px 34px rgba(74, 24, 38, 0.14);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  /* Error amber-red */
+  --color-error:       #c0553a;
+  --color-error-glow:  rgba(192, 85, 58, 0.18);
+  --color-error-light: rgba(192, 85, 58, 0.07);
 
-  /* Radii */
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 9px;
+  /* ── 2. Glass / translucency ─────────────────────────────────────────── */
+  --glass-bg:     rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.40);
+  --glass-blur:   14px;
 
-  /* Type */
+  /* ── 3. Elevation ────────────────────────────────────────────────────── */
+  --shadow-soft:   0 8px 24px rgba(74, 24, 38, 0.08);
+  --shadow-card:   0 14px 34px rgba(74, 24, 38, 0.14);
+  --shadow-inset:  inset 0 1px 0 rgba(255, 255, 255, 0.60);
+  --shadow-lift:   0 20px 48px rgba(74, 24, 38, 0.18);
+
+  /* ── 4. Geometry ─────────────────────────────────────────────────────── */
+  --radius-lg:  20px;
+  --radius-md:  14px;
+  --radius-sm:   9px;
+  --radius-xs:   5px;
+
+  /* ── 5. Typography ───────────────────────────────────────────────────── */
   --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
 
-  /* Motion */
-  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: 160ms var(--ease-standard);
-  --transition-medium: 320ms var(--ease-standard);
-  --transition-slow: 520ms var(--ease-standard);
+  /* ── 6. Motion tokens ────────────────────────────────────────────────── */
+  --ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter:     cubic-bezier(0.0, 0, 0.2, 1);   /* decelerate */
+  --ease-exit:      cubic-bezier(0.4, 0, 1, 1);     /* accelerate */
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot */
 
-  /* Ambient "breathing" atmosphere — slow and deliberately understated */
-  --breathe-duration: 21s;
-  --drift-duration: 34s;
-  --ambient-light-warm: rgba(227, 205, 157, 0.16);
-  --ambient-light-soft: rgba(255, 255, 255, 0.1);
+  --transition-fast:    160ms var(--ease-standard);
+  --transition-medium:  320ms var(--ease-standard);
+  --transition-slow:    520ms var(--ease-standard);
+  --transition-morph:   680ms var(--ease-enter);    /* for state morphs */
+
+  /* ── 7. Ambient atmosphere tokens ────────────────────────────────────── */
+  --breathe-duration:     21s;
+  --drift-duration:       34s;
+  --ambient-light-warm:   rgba(227, 205, 157, 0.16);
+  --ambient-light-soft:   rgba(255, 255, 255, 0.10);
+
+  /* ── 8. State custom properties ──────────────────────────────────────── */
+  /*
+   * These are the "live" values that shift per state.
+   * CSS selectors in App.css override these on [data-fsai-state="X"].
+   * Components consume them via var() — no hard-coded per-state colour.
+   *
+   * Default (IDLE) values are set here.
+   */
+
+  /* Hero section */
+  --state-hero-bg:            rgba(255, 255, 255, 0.55);
+  --state-hero-border:        rgba(255, 255, 255, 0.40);
+  --state-hero-heading-color: var(--color-wine-deep);
+  --state-hero-body-opacity:  1;
+
+  /* Status track */
+  --state-track-color:        var(--color-gold);
+  --state-track-opacity:      0;
+
+  /* Orb */
+  --state-orb-color:          var(--color-ink-faint);
+  --state-orb-glow:           transparent;
+  --state-orb-scale:          1;
+
+  /* Global surface tint (very subtle — applied to main-panel background) */
+  --state-surface-tint:       transparent;
+
+  /* Sidebar mood (shifts the sidebar atmosphere) */
+  --state-sidebar-intensity:  1;
 }
 
-* {
+/* ── 9. Base resets ──────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
