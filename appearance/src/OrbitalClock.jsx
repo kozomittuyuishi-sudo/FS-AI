@@ -1,22 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import './OrbitalClock.css'
-
-/* ─────────────────────────────────────────────────────────────
-   Ring label definitions
-   ───────────────────────────────────────────────────────────── */
-
-const RING_INNER  = Array.from({ length: 12 }, (_, i) => String(i).padStart(2, '0'))
-const RING_MIDDLE = Array.from({ length: 12 }, (_, i) => String(i + 12).padStart(2, '0'))
-const RING_OUTER  = Array.from({ length: 12 }, (_, i) => String((i + 1) * 5).padStart(2, '0'))
-
-/* ─────────────────────────────────────────────────────────────
-   Geometry
-   ───────────────────────────────────────────────────────────── */
-
-function polar(index, total, radius) {
-  const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
-}
+import {
+  HOUR_LABELS,
+  MINUTE_LABELS,
+  ORBITS,
+  SECOND_MARKS,
+  getClockValues,
+  getOrbitalPoint,
+} from './orbitalClockGeometry'
 
 /* ─────────────────────────────────────────────────────────────
    useDoomsdayTick
@@ -154,30 +145,22 @@ function useDoomsdayTick() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   NumberRing
+   OrbitalScale
    ───────────────────────────────────────────────────────────── */
 
-function NumberRing({ numbers, radius, activeIndex }) {
-  const total    = numbers.length
-  const rotation = -(activeIndex / total) * 360
-
+function OrbitalScale({ className, marks, currentValue, period, orbit }) {
   return (
-    <div
-      className="clock-ring"
-      style={{ transform: `translate(-50%, -50%) rotate(${rotation}deg)` }}
-    >
-      {numbers.map((label, i) => {
-        const { x, y } = polar(i, total, radius)
+    <div className={`clock-scale ${className}`}>
+      {marks.map(({ value, label }) => {
+        const { x, y } = getOrbitalPoint({ value, currentValue, period, orbit })
         return (
-          <span
-            key={label}
-            className={`clock-number${i === activeIndex ? ' clock-number--active' : ''}`}
-            style={{
-              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${-rotation}deg)`,
-            }}
-          >
-            {label}
-          </span>
+          label ? (
+            <span key={value} className="clock-number" style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}>
+              {label}
+            </span>
+          ) : (
+            <span key={value} className="clock-dot" style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }} />
+          )
         )
       })}
     </div>
@@ -193,37 +176,37 @@ export default function OrbitalClock() {
   const tick = useDoomsdayTick()
 
   useEffect(() => {
-    /*
-     * Align the interval to the next whole-second boundary so
-     * the tick fires as close to the actual second flip as possible.
-     * Then tick + update every 1000 ms from that point.
-     */
-    let intervalId = null
+    let frameId
+    let timeoutId
+    let disposed = false
 
-    const onSecond = () => {
+    const draw = () => {
       setTime(new Date())
-      tick()
+      frameId = requestAnimationFrame(draw)
     }
 
-    const msToNext = 1000 - (Date.now() % 1000)
-    const alignId  = setTimeout(() => {
-      onSecond()                                  // fire on the first boundary
-      intervalId = setInterval(onSecond, 1000)   // then every second
-    }, msToNext)
+    // Schedule each audible second from the clock itself; no fixed interval
+    // can drift the displayed time away from Date().
+    const scheduleSecond = () => {
+      const delay = 1000 - (Date.now() % 1000)
+      timeoutId = window.setTimeout(() => {
+        if (disposed) return
+        tick()
+        scheduleSecond()
+      }, delay)
+    }
+
+    frameId = requestAnimationFrame(draw)
+    scheduleSecond()
 
     return () => {
-      clearTimeout(alignId)
-      if (intervalId !== null) clearInterval(intervalId)
+      disposed = true
+      cancelAnimationFrame(frameId)
+      clearTimeout(timeoutId)
     }
   }, [tick])
 
-  const h24 = time.getHours()
-  const min = time.getMinutes()
-  const sec = time.getSeconds()
-
-  const innerActive  = h24 % 12
-  const middleActive = Math.floor(sec / 5)
-  const outerActive  = Math.floor(min / 5) % 12
+  const values = getClockValues(time)
 
   return (
     <div className="orbital-clock" aria-label="Orbital Clock">
@@ -232,14 +215,32 @@ export default function OrbitalClock() {
         <div className="clock-comet" />
       </div>
 
-      <NumberRing numbers={RING_INNER}  radius={108} activeIndex={innerActive}  />
-      <NumberRing numbers={RING_MIDDLE} radius={156} activeIndex={middleActive} />
-      <NumberRing numbers={RING_OUTER}  radius={204} activeIndex={outerActive}  />
+      <OrbitalScale
+        className="clock-scale--hour"
+        marks={HOUR_LABELS.map(value => ({ value, label: String(value) }))}
+        currentValue={values.hour}
+        period={12}
+        orbit={ORBITS.hour}
+      />
+      <OrbitalScale
+        className="clock-scale--minute"
+        marks={MINUTE_LABELS.map(value => ({ value, label: String(value) }))}
+        currentValue={values.minute}
+        period={60}
+        orbit={ORBITS.minute}
+      />
+      <OrbitalScale
+        className="clock-scale--second"
+        marks={SECOND_MARKS}
+        currentValue={values.second}
+        period={60}
+        orbit={ORBITS.second}
+      />
 
       <div className="clock-beams" aria-hidden="true">
         <div className="clock-beam clock-beam--hour"   />
-        <div className="clock-beam clock-beam--second" />
         <div className="clock-beam clock-beam--minute" />
+        <div className="clock-beam clock-beam--second" />
       </div>
 
       <div className="clock-core-glow" aria-hidden="true">
