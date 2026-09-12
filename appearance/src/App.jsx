@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import StatusOrb from './StatusOrb.jsx'
+import StatusOrb     from './StatusOrb.jsx'
 import StateDevPanel from './StateDevPanel.jsx'
+import OrbitalClock  from './OrbitalClock.jsx'
 
 import {
   useFSAI,
@@ -12,102 +13,42 @@ import {
 
 /* =========================================================
    MODULE DATA
+   id used as the CSS modifier class: module-widget--{id}
+   Appearance is not a module — the entire UI is it.
    ========================================================= */
 
 const MODULES = [
   {
-    id: 'appearance',
-    name: 'Appearance',
-    description: 'Visual identity',
-    status: 'active',
-    position: 'main',
-  },
-
-  {
-    id: 'brain',
-    name: 'Brain',
+    id:          'brain',
+    name:        'Brain',
     description: 'Core orchestration',
-    status: 'offline',
-    position: 'left-top',
+    status:      'offline',
   },
-
   {
-    id: 'memory',
-    name: 'Memory',
-    description: 'Context & history',
-    status: 'offline',
-    position: 'left-bottom',
-  },
-
-  {
-    id: 'vision',
-    name: 'Vision',
+    id:          'vision',
+    name:        'Vision',
     description: 'Visual perception',
-    status: 'offline',
-    position: 'right-top',
+    status:      'offline',
   },
-
   {
-    id: 'stylist',
-    name: 'Stylist',
+    id:          'memory',
+    name:        'Memory',
+    description: 'Context & history',
+    status:      'offline',
+  },
+  {
+    id:          'stylist',
+    name:        'Stylist',
     description: 'Style reasoning',
-    status: 'offline',
-    position: 'right-bottom',
+    status:      'offline',
   },
-
   {
-    id: 'wardrobe',
-    name: 'Wardrobe',
+    id:          'wardrobe',
+    name:        'Wardrobe',
     description: 'Clothing intelligence',
-    status: 'offline',
-    position: 'bottom',
+    status:      'offline',
   },
 ]
-
-
-/* =========================================================
-   STATE CONTENT MAP
-   ========================================================= */
-
-const STATE_CONTENT = {
-
-  [FSAI_STATES.IDLE]: {
-    eyebrow: 'FSAI',
-    heading: 'Appearance',
-    description: 'Visual identity system',
-  },
-
-  [FSAI_STATES.THINKING]: {
-    eyebrow: 'FSAI',
-    heading: 'Considering…',
-    description: 'Processing context',
-  },
-
-  [FSAI_STATES.ANALYSING]: {
-    eyebrow: 'FSAI',
-    heading: 'Reading the details.',
-    description: 'Analysing visual context',
-  },
-
-  [FSAI_STATES.PROCESSING]: {
-    eyebrow: 'FSAI',
-    heading: 'Working.',
-    description: 'Processing request',
-  },
-
-  [FSAI_STATES.RESULT]: {
-    eyebrow: 'FSAI',
-    heading: 'Ready.',
-    description: 'Result available',
-  },
-
-  [FSAI_STATES.ERROR]: {
-    eyebrow: 'FSAI',
-    heading: 'Something went wrong.',
-    description: 'The system is ready to recover',
-  },
-
-}
 
 
 /* =========================================================
@@ -118,48 +59,32 @@ export default function App() {
 
   const { state, meta, is } = useFSAI()
 
-  const [mounted, setMounted] = useState(false)
+  const [mounted,     setMounted]     = useState(false)
+  const [brainStatus, setBrainStatus] = useState('offline')
 
-
-  /* -------------------------------------------------------
-     Entrance
-     ------------------------------------------------------- */
-
+  /* ── Entrance ─────────────────────────────────────────── */
   useEffect(() => {
+    const t = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(t)
+  }, [])
 
-    const timer = requestAnimationFrame(() => {
-      setMounted(true)
+  /* ── Brain status ─────────────────────────────────────── */
+  useEffect(() => {
+    window.fsai?.getBrainStatus?.().then(s => {
+      if (s === 'ONLINE') setBrainStatus('active')
     })
-
-    return () => cancelAnimationFrame(timer)
-
   }, [])
 
-
-  /* -------------------------------------------------------
-     Renderer ready
-     ------------------------------------------------------- */
-
+  /* ── Renderer ready ───────────────────────────────────── */
   useEffect(() => {
-
     window.fsai?.send('fsai:state-ready', {})
-
   }, [])
 
-
-  /* -------------------------------------------------------
-     State
-     ------------------------------------------------------- */
-
+  /* ── Derived ──────────────────────────────────────────── */
   const isWorking =
     is(FSAI_STATES.THINKING) ||
     is(FSAI_STATES.ANALYSING) ||
     is(FSAI_STATES.PROCESSING)
-
-
-  const content =
-    STATE_CONTENT[state] ??
-    STATE_CONTENT[FSAI_STATES.IDLE]
 
 
   /* =======================================================
@@ -171,199 +96,113 @@ export default function App() {
     <div
       className={[
         'appearance',
-        mounted ? 'appearance--mounted' : '',
-        isWorking ? 'appearance--working' : '',
+        mounted   ? 'appearance--mounted'  : '',
+        isWorking ? 'appearance--working'  : '',
         `appearance--${String(state).toLowerCase()}`,
       ].join(' ')}
-
       data-state={state}
     >
 
-
-      {/* ===================================================
-          VIDEO ENVIRONMENT
-          =================================================== */}
-
-      <div
-        className="background-layer"
-        aria-hidden="true"
-      >
-
+      {/* ── Video background ──────────────────────────────── */}
+      <div className="background-layer" aria-hidden="true">
         <video
           className="background-video"
-          autoPlay
-          muted
-          loop
-          playsInline
+          autoPlay muted loop playsInline
           src="/video/webwallpaper.mp4"
         />
-
         <div className="background-overlay" />
-
         <div className="background-vignette" />
-
       </div>
 
-
-      {/* ===================================================
-          TOP BRAND
-          =================================================== */}
-
+      {/* ── Brand / status header ─────────────────────────── */}
       <header className="appearance-header">
-
         <div className="appearance-brand">
-
-          <span className="appearance-brand-mark">
-            FSAI
-          </span>
-
-          <span className="appearance-brand-name">
-            FashionSense AI
-          </span>
-
+          <span className="appearance-brand-mark">FSAI</span>
+          <span className="appearance-brand-name">FashionSense AI</span>
         </div>
-
-
         <div className="appearance-status">
-
           <StatusOrb />
-
-          <span>
-            {STATE_LABEL[state]}
-          </span>
-
+          <span>{STATE_LABEL[state]}</span>
         </div>
-
       </header>
 
 
-      {/* ===================================================
-          WIDGET STAGE
-          =================================================== */}
+      {/* ═════════════════════════════════════════════════════
+          FSAI STAGE
+          ─────────────────────────────────────────────────────
+          Single positioning layer.  Every child uses:
 
-      <main className="widget-stage">
+            left: var(--clock-x)
+            top:  var(--clock-y)
+            transform: translate(-50%,-50%) translate(--x, --y)
 
+          So all elements share the same origin (clock centre).
+          Clock offset = (0,0).  Modules are offset from it.
+          ===================================================== */}
 
-        {/* -------------------------------------------------
-            MODULE WIDGETS
-            ------------------------------------------------- */}
+      <main
+        className={[
+          'fsai-stage',
+          mounted ? 'fsai-stage--mounted' : '',
+        ].join(' ')}
+        aria-label="FSAI module stage"
+      >
 
-        {MODULES.map((module) => (
-
-          <ModuleWidget
-            key={module.id}
-            module={module}
-            currentState={state}
-            content={module.position === 'main' ? content : null}
-            meta={module.position === 'main' ? meta : null}
-          />
-
-        ))}
-
-
-        {/* =================================================
-            STATE INDICATOR
-            ================================================= */}
-
-        <div className="appearance-state">
-
-          <span className="appearance-state-line" />
-
-          <span>
-            {STATE_LABEL[state]}
-          </span>
-
-          <span className="appearance-state-line" />
-
+        {/* ── Orbital Clock — origin anchor ─────────────────── */}
+        <div className="fsai-node fsai-node--clock">
+          <OrbitalClock />
         </div>
 
+        {/* ── Module widgets ────────────────────────────────── */}
+        {MODULES.map(mod => (
+          <ModuleWidget
+            key={mod.id}
+            module={mod}
+            currentState={state}
+            statusOverride={mod.id === 'brain' ? brainStatus : undefined}
+          />
+        ))}
 
-        {/* =================================================
-            PROCESSING
-            ================================================= */}
+        {/* ── State label ───────────────────────────────────── */}
+        <div className="stage-state-label" aria-hidden="true">
+          <span className="stage-state-line" />
+          <span>{STATE_LABEL[state]}</span>
+          <span className="stage-state-line" />
+        </div>
 
+        {/* ── Processing dots ───────────────────────────────── */}
         {isWorking && (
-
-          <div className="appearance-processing">
-
-            <span />
-            <span />
-            <span />
-
+          <div className="appearance-processing" aria-hidden="true">
+            <span /><span /><span />
           </div>
-
         )}
 
-
-        {/* =================================================
-            RESULT
-            ================================================= */}
-
+        {/* ── Result ────────────────────────────────────────── */}
         {is(FSAI_STATES.RESULT) && (
-
           <section className="appearance-result">
-
-            <span className="appearance-result-label">
-              RESULT
-            </span>
-
-            <h2>
-              {meta?.headline || 'Analysis complete.'}
-            </h2>
-
-            {meta?.summary && (
-              <p>{meta.summary}</p>
-            )}
-
+            <span className="appearance-result-label">RESULT</span>
+            <h2>{meta?.headline || 'Analysis complete.'}</h2>
+            {meta?.summary && <p>{meta.summary}</p>}
             {meta?.items?.length > 0 && (
-
               <ul>
-
-                {meta.items.map((item, index) => (
-
-                  <li key={index}>
-                    {item}
-                  </li>
-
-                ))}
-
+                {meta.items.map((item, i) => <li key={i}>{item}</li>)}
               </ul>
-
             )}
-
           </section>
-
         )}
 
-
-        {/* =================================================
-            ERROR
-            ================================================= */}
-
+        {/* ── Error ─────────────────────────────────────────── */}
         {is(FSAI_STATES.ERROR) && (
-
           <section className="appearance-error">
-
-            <span>
-              ERROR
-            </span>
-
-            <p>
-              {meta?.message ||
-                'An unexpected error occurred.'}
-            </p>
-
+            <span>ERROR</span>
+            <p>{meta?.message || 'An unexpected error occurred.'}</p>
           </section>
-
         )}
 
       </main>
 
 
-      {/* ===================================================
-          DEVELOPMENT PANEL
-          =================================================== */}
-
+      {/* ── Dev panel ─────────────────────────────────────── */}
       <StateDevPanel />
 
     </div>
@@ -376,113 +215,50 @@ export default function App() {
    MODULE WIDGET
    ========================================================= */
 
-function ModuleWidget({
-  module,
-  currentState,
-  content,
-  meta,
-}) {
+function ModuleWidget({ module, currentState, statusOverride }) {
 
-  const isMain =
-    module.position === 'main'
+  const resolvedStatus = statusOverride !== undefined
+    ? statusOverride
+    : module.status
 
-  const isActive =
-    module.status === 'active'
-
+  const isActive     = resolvedStatus === 'active'
   const isProcessing =
     currentState !== FSAI_STATES.IDLE &&
     currentState !== FSAI_STATES.RESULT &&
     currentState !== FSAI_STATES.ERROR
 
   return (
-
     <article
       className={[
+        'fsai-node',
         'module-widget',
-        `module-widget--${module.position}`,
-        isActive ? 'module-widget--active' : '',
-        isProcessing && !isActive
-          ? 'module-widget--recede'
-          : '',
+        `module-widget--${module.id}`,
+        isActive                  ? 'module-widget--active' : '',
+        isProcessing && !isActive ? 'module-widget--recede' : '',
       ].join(' ')}
     >
-
       <div className="module-widget-inner">
 
         <div className="module-widget-header">
-
-          <span
-            className={[
-              'module-widget-indicator',
-              isActive
-                ? 'module-widget-indicator--active'
-                : '',
-            ].join(' ')}
-          />
-
+          <span className={[
+            'module-widget-indicator',
+            isActive ? 'module-widget-indicator--active' : '',
+          ].join(' ')} />
           <span className="module-widget-index">
             {module.id.slice(0, 2).toUpperCase()}
           </span>
-
         </div>
 
-
-        {/* Main/Appearance widget shows full state content */}
-
-        {isMain && content ? (
-
-          <div className="module-widget-content module-widget-content--main">
-
-            <span className="appearance-eyebrow">
-              {content.eyebrow}
-            </span>
-
-            <h1 className="appearance-title">
-              {content.heading}
-            </h1>
-
-            <p className="appearance-description">
-              {content.description}
-            </p>
-
-            {meta?.summary && (
-              <p className="appearance-meta">
-                {meta.summary}
-              </p>
-            )}
-
-          </div>
-
-        ) : (
-
-          <div className="module-widget-content">
-
-            <h2>
-              {module.name}
-            </h2>
-
-            <p>
-              {module.description}
-            </p>
-
-          </div>
-
-        )}
-
+        <div className="module-widget-content">
+          <h2>{module.name}</h2>
+          <p>{module.description}</p>
+        </div>
 
         <div className="module-widget-footer">
-
-          <span>
-            {isActive
-              ? STATE_LABEL[currentState]
-              : 'Offline'}
-          </span>
-
+          <span>{isActive ? 'Online' : 'Offline'}</span>
         </div>
 
       </div>
-
     </article>
-
   )
 }

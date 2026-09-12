@@ -1,21 +1,25 @@
 {
-  "name": "fsai",
+  "name": "appearance",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "FSAI Appearance UI",
+  "main": "electron/main.js",
   "scripts": {
+    "dev": "concurrently -k -n VITE,ELECTRON -c cyan,yellow \"vite\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "build": "vite build",
+    "start": "electron .",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kozomittuyuishi-sudo/FS-AI.git"
+  "dependencies": {
+    "electron": "^36.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/kozomittuyuishi-sudo/FS-AI/issues"
-  },
-  "homepage": "https://github.com/kozomittuyuishi-sudo/FS-AI#readme"
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "vite": "^6.4.3",
+    "wait-on": "^8.0.3"
+  }
 }

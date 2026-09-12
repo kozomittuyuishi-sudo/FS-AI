@@ -46,6 +46,11 @@ contextBridge.exposeInMainWorld('fsai', {
     }
   },
 
+  // ── Brain status query ─────────────────────────────────────────────────────
+  // React calls this on mount to learn whether the Python Brain started.
+  // Resolves to 'ONLINE' or 'OFFLINE'.
+  getBrainStatus: () => ipcRenderer.invoke('fsai:brain-status'),
+
   // ── Main → Renderer ────────────────────────────────────────────────────────
   // Returns an unsubscribe function so React effects can clean up properly.
   on: (channel, callback) => {

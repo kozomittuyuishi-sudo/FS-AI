@@ -1,6 +1,24 @@
 class Brain:
     def __init__(self):
         self.modules = {}
+        self.running = False
+
+    def start(self):
+        if self.running:
+            return
+
+        self.running = True
+        print("FSAI IQ is online.")
+
+    def stop(self):
+        if not self.running:
+            return
+
+        self.running = False
+        print("FSAI IQ is offline.")
+
+    def is_running(self):
+        return self.running
 
     def register(self, name, module):
         self.modules[name] = module
@@ -35,6 +53,3 @@ class Brain:
             }
 
         return module.handle(request)
-
-    def start(self):
-        print("FSAI IQ is online.")

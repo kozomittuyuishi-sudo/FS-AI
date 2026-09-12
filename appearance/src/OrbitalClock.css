@@ -1,0 +1,258 @@
+/* ═══════════════════════════════════════════════════════════════
+   OrbitalClock.css
+   ─────────────────────────────────────────────────────────────
+   Three number rings occupy different radii.
+   NO decorative circle is drawn around any of them —
+   the orbital aesthetic lives in the number placement,
+   the outer comet track, the glow, and the central disc.
+
+   Three fixed beams point to 12 o'clock.
+   Rings rotate so the active number rises to the beam tip.
+   ═══════════════════════════════════════════════════════════════ */
+
+
+/* ── Container ──────────────────────────────────────────────── */
+
+.orbital-clock {
+  position: relative;
+  width: 480px;
+  height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+
+/* ── Number rings ────────────────────────────────────────────── */
+
+.clock-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  /* smooth ring rotation; not so slow it feels broken */
+  transition: transform 500ms cubic-bezier(.4, 0, .2, 1);
+  pointer-events: none;
+}
+
+.clock-number {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(200, 225, 255, 0.45);
+  pointer-events: none;
+  transition: color 350ms ease, text-shadow 350ms ease;
+  user-select: none;
+}
+
+/* Active — the number that aligns with its beam */
+.clock-number--active {
+  color: rgba(165, 220, 255, 1.00);
+  text-shadow:
+    0 0  5px rgba(130, 205, 255, 0.90),
+    0 0 16px rgba(80,  165, 255, 0.55);
+}
+
+
+/* ── Outer comet orbit ───────────────────────────────────────── */
+/*
+   This is the ONLY visible circular line on the clock.
+   It sits outside all three number rings (outer ring r ≈ 204 px).
+   Diameter = 2 × (204 + 42) ≈ 492 px → use 490 px.
+*/
+
+.clock-orbit {
+  position: absolute;
+  width: 490px;
+  height: 490px;
+  border-radius: 50%;
+  border: 1px solid rgba(130, 185, 230, 0.20);
+  box-shadow:
+    0 0 20px rgba(70, 135, 205, 0.07),
+    inset 0 0 20px rgba(70, 135, 205, 0.04);
+  animation: orbitBreath 7s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Comet dot — starts at 12 o'clock, orbits clockwise */
+.clock-comet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  top: -4px;
+  left: 50%;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #a8e0ff;
+  box-shadow:
+    0 0  5px #a8e0ff,
+    0 0 14px rgba(110, 195, 255, 0.90),
+    0 0 28px rgba(80,  155, 255, 0.60);
+  /* orbit radius = half of .clock-orbit height = 245 px */
+  transform-origin: 50% 245px;
+  animation: cometOrbit 14s linear infinite;
+}
+
+/* trailing blue wake */
+.clock-comet::after {
+  content: '';
+  position: absolute;
+  width: 50px;
+  height: 2px;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(to left, rgba(155, 220, 255, 0.70), transparent);
+  filter: blur(1px);
+}
+
+
+/* ── Fixed light beams ──────────────────────────────────────── */
+/*
+   All three beams are fixed at 12 o'clock (pointing straight up).
+   They are NEVER rotated.  Only the number rings rotate under them.
+
+   Pattern:
+     left: 50% + top: 50%  →  clock centre
+     transform-origin: bottom center  →  pivots from centre
+     transform: translate(-50%, -100%)  →  rises above centre
+*/
+
+.clock-beams {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.clock-beam {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  transform-origin: bottom center;
+  transform: translate(-50%, -100%);
+  border-radius: 999px;
+}
+
+/* Hour beam — inner ring r ≈ 108 px */
+.clock-beam--hour {
+  height: 110px;
+  background: linear-gradient(
+    to top,
+    rgba(210, 235, 255, 1.00) 0%,
+    rgba(140, 205, 255, 0.65) 55%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 8px  rgba(150, 215, 255, 0.80),
+    0 0 22px rgba(90,  170, 255, 0.38);
+}
+
+/* Second beam — middle ring r ≈ 156 px */
+.clock-beam--second {
+  height: 158px;
+  background: linear-gradient(
+    to top,
+    rgba(175, 215, 255, 0.85) 0%,
+    rgba(100, 175, 255, 0.45) 55%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 6px  rgba(125, 200, 255, 0.65),
+    0 0 16px rgba(70,  145, 255, 0.28);
+  opacity: 0.72;
+}
+
+/* Minute beam — outer ring r ≈ 204 px */
+.clock-beam--minute {
+  height: 207px;
+  background: linear-gradient(
+    to top,
+    rgba(165, 210, 255, 0.80) 0%,
+    rgba(95,  168, 255, 0.40) 55%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 5px  rgba(115, 190, 255, 0.55),
+    0 0 14px rgba(65,  135, 255, 0.24);
+  opacity: 0.55;
+}
+
+
+/* ── Irradiated black core disc ─────────────────────────────── */
+
+.clock-core-glow {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* subtle radial irradiation around the disc */
+  background: radial-gradient(
+    circle,
+    rgba(115, 178, 230, 0.34) 0%,
+    rgba(88,  145, 205, 0.16) 35%,
+    rgba(48,  85,  135, 0.07) 58%,
+    transparent 75%
+  );
+  box-shadow:
+    0 0 30px rgba(90,  165, 230, 0.18),
+    0 0 65px rgba(58,  115, 190, 0.10);
+  animation: corePulse 4.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.clock-core {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 28%,
+    rgba(28, 28, 38, 0.88),
+    #010206 70%
+  );
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 1.00),
+    0 0 16px rgba(80, 155, 220, 0.20);
+}
+
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+
+@keyframes cometOrbit {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes corePulse {
+  0%, 100% { transform: scale(0.95); opacity: 0.72; }
+  50%      { transform: scale(1.06); opacity: 1.00; }
+}
+
+@keyframes orbitBreath {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1.00; }
+}
+
+
+/* ── Reduced-motion ─────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-comet     { animation: none; }
+  .clock-core-glow { animation: none; }
+  .clock-orbit     { animation: none; }
+  .clock-ring      { transition: none; }
+  .clock-number    { transition: none; }
+}

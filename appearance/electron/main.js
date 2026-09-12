@@ -33,6 +33,13 @@ function createWindow() {
   win.on('closed', () => { win = null })
 }
 
+// ── IPC: Brain status query ───────────────────────────────────────────────────
+// React calls window.fsai.getBrainStatus() on mount.
+// Returns 'ONLINE' or 'OFFLINE' based on the env var set by main.py.
+ipcMain.handle('fsai:brain-status', () => {
+  return process.env.FSAI_BRAIN_STATUS ?? 'OFFLINE'
+})
+
 // ── IPC: Renderer ready signal ────────────────────────────────────────────────
 // When the React app mounts it sends 'fsai:state-ready'.
 // We can use this hook to push an initial state if needed.

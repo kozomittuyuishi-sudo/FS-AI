@@ -1375,79 +1375,176 @@
 
 
 /* =========================================================
-   WIDGET STAGE
+   FSAI STAGE  —  geometric coordinate system
+   ─────────────────────────────────────────────────────────
+   Every child uses the same anchor formula:
+
+     left:      var(--clock-x)
+     top:       var(--clock-y)
+     transform: translate(-50%, -50%)
+                translate(var(--x), var(--y))
+
+   The clock lives at (0, 0) — i.e. exactly at
+   (--clock-x, --clock-y) = (50%, 50%).
+
+   All module offsets are expressed relative to that origin,
+   so the entire constellation can be re-centred by changing
+   --clock-x and --clock-y alone.
+
+   --stage-scale lets the whole field shrink on narrow windows
+   without changing any individual offset value.
    ========================================================= */
 
-.widget-stage {
-  position: relative;
-  width: min(1500px, 94vw);
-  height: min(760px, 82vh);
-  margin: 0 auto;
-  top: 50%;
-  transform: translateY(-50%);
-  perspective: 1600px;
+.fsai-stage {
+  /* Custom property origin — tune here only */
+  --clock-x:     50%;
+  --clock-y:     50%;
+
+  /* Scale factor applied via scale() on each .fsai-node so
+     the full constellation stays centred and proportional */
+  --stage-scale: 1;
+
+  position: absolute;
+  inset: 0;
   z-index: 10;
+  /* perspective keeps the 3-D widget tilts */
+  perspective: 1600px;
+  overflow: hidden;
+}
+
+/* Every positioned node (clock + all widgets) */
+.fsai-node {
+  position: absolute;
+  left: var(--clock-x);
+  top:  var(--clock-y);
+  /* default offset = clock centre; overridden per-node below */
+  --x: 0px;
+  --y: 0px;
+  transform:
+    translate(-50%, -50%)
+    translate(var(--x), var(--y))
+    scale(var(--stage-scale));
+  transform-origin: center center;
+  transition:
+    transform    0.5s cubic-bezier(.16, 1, .3, 1),
+    opacity      0.5s ease,
+    border-color 0.5s ease,
+    box-shadow   0.5s ease;
 }
 
 
 /* =========================================================
-   ALL MODULE WIDGETS
+   CLOCK NODE  —  origin (0, 0)
+   ========================================================= */
+
+.fsai-node--clock {
+  --x: 0px;
+  --y: 0px;
+  /* clock is behind modules in the tilt stack */
+  z-index: 1;
+}
+
+
+/* =========================================================
+   MODULE WIDGET OFFSETS  —  relative to clock centre
+   ─────────────────────────────────────────────────────────
+   Geometry reference:
+     --clock-r   : outer orbit radius  (490px ÷ 2 = 245px)
+     --widget-w  : widget width        (220px)
+     --widget-h  : widget height       (150px)
+     --gap       : clear space between orbit edge and widget (36px)
+
+   Horizontal reach to widget centre:
+     --reach-x = --clock-r + --gap + (--widget-w / 2)
+               =    245    +  36   +     110           = 391px
+
+   Vertical reach to widget centre (below) for Wardrobe:
+     --reach-y = --clock-r + --gap + (--widget-h / 2)
+               =    245    +  36   +      75           = 356px
+
+   Layout (x, y from clock centre):
+     Brain    = (–reach-x,  –clock-r × 0.33)  mid-left,  upper-middle
+     Vision   = (+reach-x,  –clock-r × 0.33)  mid-right, symmetric with Brain
+     Memory   = (–reach-x,  +clock-r × 0.55)  lower-left
+     Stylist  = (+reach-x,  +clock-r × 0.55)  lower-right, symmetric with Memory
+     Wardrobe = (0,         +reach-y        )  centred below clock
+
+   To adjust spacing: change --gap only. All five positions update.
+   ========================================================= */
+
+.fsai-stage {
+  --clock-r:  245px;   /* half of the 490px outer orbit diameter   */
+  --widget-w: 220px;   /* module-widget width                       */
+  --widget-h: 150px;   /* module-widget height                      */
+  --gap:       36px;   /* clear space between orbit edge and widget */
+
+  /* Derived — do not edit directly */
+  --reach-x: calc(var(--clock-r) + var(--gap) + var(--widget-w) / 2);  /* 391px */
+  --reach-y: calc(var(--clock-r) + var(--gap) + var(--widget-h) / 2);  /* 356px */
+  --mid-up:  calc(var(--clock-r) * -0.33);   /* –81px  — upper-middle band  */
+  --mid-dn:  calc(var(--clock-r) *  0.55);   /* +135px — lower-middle band  */
+}
+
+.module-widget--brain    { --x: calc(-1 * var(--reach-x)); --y: var(--mid-up); }
+.module-widget--vision   { --x: var(--reach-x);            --y: var(--mid-up); }
+.module-widget--memory   { --x: calc(-1 * var(--reach-x)); --y: var(--mid-dn); }
+.module-widget--stylist  { --x: var(--reach-x);            --y: var(--mid-dn); }
+.module-widget--wardrobe { --x: 0px;                       --y: var(--reach-y); }
+
+
+/* =========================================================
+   MODULE WIDGET  —  visual style (unchanged)
    ========================================================= */
 
 .module-widget {
-  position: absolute;
   width: 220px;
   height: 150px;
   border: 1px solid rgba(246, 241, 238, 0.22);
   border-radius: 18px;
 
-  /* Glass / pearlescent wine-red base */
   background:
     linear-gradient(
       135deg,
       rgba(255, 240, 244, 0.10) 0%,
-      rgba(109, 36, 54, 0.20) 55%,
-      rgba(45, 13, 26, 0.28) 100%
+      rgba(109,  36,  54, 0.20) 55%,
+      rgba( 45,  13,  26, 0.28) 100%
     );
 
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
 
   box-shadow:
-    0 15px 45px rgba(0, 0, 0, 0.32),
-    0 2px 8px  rgba(109, 36, 54, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    inset 0 -1px 0 rgba(109, 36, 54, 0.12);
+    0 15px 45px rgba(  0,  0,   0, 0.32),
+    0  2px  8px rgba(109, 36,  54, 0.18),
+    inset 0  1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(109,  36,  54, 0.12);
 
   overflow: hidden;
   cursor: pointer;
-
-  transition:
-    transform     0.5s cubic-bezier(.16, 1, .3, 1),
-    opacity       0.5s ease,
-    border-color  0.5s ease,
-    box-shadow    0.5s ease;
+  position: absolute;   /* must match .fsai-node — see positioning fix note above */
+  z-index: 2;
 }
 
-/* Pearlescent highlight sheen */
+/* Pearlescent sheen */
 .module-widget::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background:
     linear-gradient(
       115deg,
-      rgba(255, 255, 255, 0.11) 0%,
+      rgba(255, 255, 255, 0.11)  0%,
       rgba(255, 240, 244, 0.06) 25%,
-      transparent 50%,
+      transparent                50%,
       rgba(201, 167, 105, 0.05) 100%
     );
   pointer-events: none;
 }
 
-/* Subtle inner border glow */
+/* Inner border glow */
 .module-widget::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -1458,110 +1555,74 @@
 .module-widget:hover {
   border-color: rgba(246, 241, 238, 0.46);
   box-shadow:
-    0 22px 60px rgba(0, 0, 0, 0.42),
-    0 4px 16px  rgba(109, 36, 54, 0.22),
-    0 0 28px    rgba(201, 167, 105, 0.09),
+    0 22px 60px rgba(  0,   0,   0, 0.42),
+    0  4px 16px rgba(109,  36,  54, 0.22),
+    0  0   28px rgba(201, 167, 105, 0.09),
     inset 0 1px 0 rgba(255, 255, 255, 0.20);
 }
 
 
 /* =========================================================
-   WIDGET POSITIONS
+   HOVER — offset compensates to avoid layout jump
+   The transform chain is:
+     translate(-50%,-50%) translate(--x,--y) scale(--stage-scale)
+   On hover we add a nudge inside a wrapper translate so the
+   widget appears to lift toward its natural "open" direction.
    ========================================================= */
 
-.module-widget--left-top {
-  top: 18%;
-  left: 5%;
-  transform: rotateY(9deg) rotateZ(-1deg);
-}
-
-.module-widget--left-bottom {
-  bottom: 12%;
-  left: 9%;
-  transform: rotateY(8deg) rotateZ(1deg);
-}
-
-.module-widget--right-top {
-  top: 18%;
-  right: 5%;
-  transform: rotateY(-9deg) rotateZ(1deg);
-}
-
-.module-widget--right-bottom {
-  bottom: 12%;
-  right: 9%;
-  transform: rotateY(-8deg) rotateZ(-1deg);
-}
-
-.module-widget--bottom {
-  bottom: 2%;
-  left: 50%;
-  transform: translateX(-50%) rotateX(4deg);
-}
+.module-widget--brain:hover    { transform: translate(-50%,-50%) translate(var(--x),var(--y)) scale(var(--stage-scale)) translate(-6px, 0)  rotateY( 4deg); }
+.module-widget--vision:hover   { transform: translate(-50%,-50%) translate(var(--x),var(--y)) scale(var(--stage-scale)) translate( 6px, 0)  rotateY(-4deg); }
+.module-widget--memory:hover   { transform: translate(-50%,-50%) translate(var(--x),var(--y)) scale(var(--stage-scale)) translate(-6px, 0)  rotateY( 4deg); }
+.module-widget--stylist:hover  { transform: translate(-50%,-50%) translate(var(--x),var(--y)) scale(var(--stage-scale)) translate( 6px, 0)  rotateY(-4deg); }
+.module-widget--wardrobe:hover { transform: translate(-50%,-50%) translate(var(--x),var(--y)) scale(var(--stage-scale)) translate( 0,   6px) rotateX(-3deg); }
 
 
 /* =========================================================
-   HOVER POSITIONS — widget enlarges from its own anchor
-   ========================================================= */
-
-.module-widget--left-top:hover {
-  transform: translateX(-7px) rotateY(4deg) rotateZ(-1deg) scale(1.04);
-}
-
-.module-widget--left-bottom:hover {
-  transform: translateX(-5px) rotateY(3deg) rotateZ(1deg) scale(1.04);
-}
-
-.module-widget--right-top:hover {
-  transform: translateX(7px) rotateY(-4deg) rotateZ(1deg) scale(1.04);
-}
-
-.module-widget--right-bottom:hover {
-  transform: translateX(5px) rotateY(-3deg) rotateZ(-1deg) scale(1.04);
-}
-
-.module-widget--bottom:hover {
-  transform: translateX(-50%) translateY(-6px) rotateX(2deg) scale(1.04);
-}
-
-
-/* =========================================================
-   MAIN / APPEARANCE WIDGET (active)
+   ACTIVE state — visual accent (Brain online, etc.)
    ========================================================= */
 
 .module-widget--active {
-  width: 480px;
-  height: 310px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 8;
-
-  /* Richer wine-red glass for the central widget */
   border-color: rgba(201, 167, 105, 0.42);
-  background:
-    linear-gradient(
-      140deg,
-      rgba(255, 245, 248, 0.13) 0%,
-      rgba(109, 36, 54, 0.28) 45%,
-      rgba(45, 13, 26, 0.32) 100%
-    );
-
   box-shadow:
-    0 32px 96px rgba(0, 0, 0, 0.44),
-    0 8px 28px  rgba(109, 36, 54, 0.24),
-    0 0 48px    rgba(109, 36, 54, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(109, 36, 54, 0.16);
+    0 20px 60px rgba(  0,   0,   0, 0.40),
+    0  4px 16px rgba(109,  36,  54, 0.22),
+    0  0   36px rgba(109,  36,  54, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-.module-widget--active:hover {
-  transform: translate(-50%, -50%) scale(1.025);
-  box-shadow:
-    0 36px 108px rgba(0, 0, 0, 0.50),
-    0 10px 32px  rgba(109, 36, 54, 0.28),
-    0 0 56px     rgba(109, 36, 54, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+/* =========================================================
+   STATE LABEL  —  below the clock, floated
+   ========================================================= */
+
+.stage-state-label {
+  position: absolute;
+  left: var(--clock-x);
+  top:  var(--clock-y);
+  transform:
+    translate(-50%, -50%)
+    translate(0px, 290px)      /* just below the outer ring */
+    scale(var(--stage-scale));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(246, 241, 238, 0.38);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.stage-state-line {
+  width: 38px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 167, 105, 0.50));
+  flex-shrink: 0;
+}
+.stage-state-line:last-child {
+  background: linear-gradient(90deg, rgba(201, 167, 105, 0.50), transparent);
 }
 
 
@@ -1733,11 +1794,16 @@
 
 .appearance-processing {
   position: absolute;
-  left: 50%;
-  bottom: -54px;
-  transform: translateX(-50%);
+  left: var(--clock-x, 50%);
+  top:  var(--clock-y, 50%);
+  transform:
+    translate(-50%, -50%)
+    translate(0px, 310px)
+    scale(var(--stage-scale, 1));
   display: flex;
   gap: 5px;
+  z-index: 12;
+  pointer-events: none;
 }
 
 .appearance-processing span {
@@ -1854,90 +1920,48 @@
    ENTRANCE ANIMATIONS
    ========================================================= */
 
-/* All widgets and the header start invisible */
-.module-widget,
+.fsai-node,
 .appearance-header {
   opacity: 0;
-  transition: opacity 1s ease;
+  /* transition already set on .fsai-node; header needs one too */
+  transition: opacity 1s ease, transform 0.5s cubic-bezier(.16, 1, .3, 1);
 }
 
-/* Reveal on mount */
-.appearance--mounted .module-widget,
+.appearance--mounted .fsai-node,
 .appearance--mounted .appearance-header {
   opacity: 1;
 }
 
-/* Staggered per-position delays */
-.appearance--mounted .module-widget--left-top    { transition-delay: 0.15s; }
-.appearance--mounted .module-widget--left-bottom { transition-delay: 0.25s; }
-.appearance--mounted .module-widget--right-top   { transition-delay: 0.20s; }
-.appearance--mounted .module-widget--right-bottom{ transition-delay: 0.30s; }
-.appearance--mounted .module-widget--bottom      { transition-delay: 0.35s; }
-
-/* Main / active widget entrance — slightly earlier, no delay override needed */
-.appearance--mounted .module-widget--active      { transition-delay: 0.05s; }
+/* Clock fades in first as the hero element */
+.appearance--mounted .fsai-node--clock         { transition-delay: 0.05s; }
+/* Modules stagger in afterward */
+.appearance--mounted .module-widget--brain     { transition-delay: 0.15s; }
+.appearance--mounted .module-widget--vision    { transition-delay: 0.20s; }
+.appearance--mounted .module-widget--memory    { transition-delay: 0.25s; }
+.appearance--mounted .module-widget--stylist   { transition-delay: 0.30s; }
+.appearance--mounted .module-widget--wardrobe  { transition-delay: 0.35s; }
 
 
 /* =========================================================
-   MOBILE
+   RESPONSIVE — scale the whole constellation down
+   ─────────────────────────────────────────────────────────
+   We only change --stage-scale on .fsai-stage.
+   All absolute offsets keep their original values; the
+   scale() in each .fsai-node's transform handles the rest.
    ========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
+  .fsai-stage { --stage-scale: 0.88; }
+}
 
-  .widget-stage {
-    width: 100%;
-    height: 700px;
-  }
+@media (max-width: 1080px) {
+  .fsai-stage { --stage-scale: 0.76; }
+}
 
-  .module-widget {
-    width: 170px;
-    height: 120px;
-  }
-
-  .module-widget--active {
-    width: 370px;
-    height: 260px;
-  }
-
-  .appearance-title {
-    font-size: 40px;
-  }
-
+@media (max-width: 860px) {
+  .fsai-stage { --stage-scale: 0.62; }
 }
 
 @media (max-width: 650px) {
-
-  .widget-stage {
-    height: auto;
-    top: 0;
-    transform: none;
-    margin-top: 110px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    perspective: none;
-  }
-
-  .module-widget,
-  .module-widget--left-top,
-  .module-widget--left-bottom,
-  .module-widget--right-top,
-  .module-widget--right-bottom,
-  .module-widget--bottom,
-  .module-widget--active {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    width: min(88vw, 380px);
-    height: 150px;
-    transform: none;
-  }
-
-  .module-widget--active {
-    height: 220px;
-  }
-
+  .fsai-stage { --stage-scale: 0.50; }
 }
